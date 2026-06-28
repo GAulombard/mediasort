@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── DEBUG ─────────────────────────────────────────────────────────────
+      - name: "[DEBUG] Runner & trigger info"
+        run: |
+          echo "Event       : ${{ github.event_name }}"
+          echo "Ref         : ${{ github.ref }}"
+          echo "Branch      : ${{ github.ref_name }}"
+          echo "Commit SHA  : ${{ github.sha }}"
+          echo "Actor       : ${{ github.actor }}"
+          echo "Repository  : ${{ github.repository }}"
+          echo "Runner OS   : ${{ runner.os }} / ${{ runner.arch }}"
+
+      # ── CHECKOUT ──────────────────────────────────────────────────────────
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "[DEBUG] Workspace contents"
+        run: ls -la
+
+      # ── JAVA ──────────────────────────────────────────────────────────────
+      - name: "Set up Java 21"
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: "[DEBUG] Java & Maven versions"
+        run: |
+          echo "--- java ---"
+          java -version
+          echo "--- mvn ---"
+          mvn -version
+
+      # ── BUILD & TEST ──────────────────────────────────────────────────────
+      - name: "Build & Test (mvn clean verify)"
+        run: mvn clean verify
+
+      # ── POST BUILD ────────────────────────────────────────────────────────
+      - name: "[DEBUG] Build artifacts"
+        if: always()
+        run: |
+          echo "--- target/ ---"
+          ls -lh target/*.jar 2>/dev/null || echo "No JAR found in target/"
+
+      - name: "Upload surefire reports on failure"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7

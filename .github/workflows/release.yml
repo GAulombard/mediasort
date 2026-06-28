@@ -1,0 +1,133 @@
+name: Release
+
+# Triggers:
+#   1. Push a tag: git tag v1.2.3 && git push origin v1.2.3
+#   2. Manually via GitHub Actions UI (Actions → Release → Run workflow)
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (must already exist, e.g. v1.2.3)"
+        required: true
+
+# Required to create the GitHub Release and upload assets
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── DEBUG : TRIGGER ───────────────────────────────────────────────────
+      - name: "[DEBUG] Trigger context"
+        run: |
+          echo "Event           : ${{ github.event_name }}"
+          echo "Ref             : ${{ github.ref }}"
+          echo "Ref name        : ${{ github.ref_name }}"
+          echo "Manual tag input: ${{ github.event.inputs.tag }}"
+          echo "Actor           : ${{ github.actor }}"
+          echo "Repository      : ${{ github.repository }}"
+
+      # Resolve the tag whether triggered by push or dispatch
+      - name: "Resolve tag name"
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "name=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "[DEBUG] Resolved tag: ${TAG}"
+
+      # ── DEBUG : TOKEN ─────────────────────────────────────────────────────
+      - name: "[DEBUG] Verify GITHUB_TOKEN is present"
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "${TOKEN}" ]; then
+            echo "ERROR: GITHUB_TOKEN is empty — check repository permissions"
+            exit 1
+          fi
+          echo "GITHUB_TOKEN is present (masked)"
+
+      # ── DEBUG : GH CLI AUTH ───────────────────────────────────────────────
+      - name: "[DEBUG] GitHub CLI auth status"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh auth status
+
+      # ── CHECKOUT ──────────────────────────────────────────────────────────
+      - name: "Checkout tag ${{ steps.tag.outputs.name }}"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.name }}
+
+      - name: "[DEBUG] Current commit after checkout"
+        run: |
+          git log -1 --oneline
+          git describe --tags --exact-match 2>/dev/null || echo "(not on an exact tag)"
+
+      # ── JAVA ──────────────────────────────────────────────────────────────
+      - name: "Set up Java 21"
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: "[DEBUG] Java & Maven versions"
+        run: |
+          echo "--- java ---"
+          java -version
+          echo "--- mvn ---"
+          mvn -version
+
+      # ── BUILD & TEST ──────────────────────────────────────────────────────
+      - name: "Build & Test (mvn clean verify)"
+        run: mvn clean verify
+
+      # ── DEBUG : JAR ───────────────────────────────────────────────────────
+      - name: "[DEBUG] Verify JAR was produced"
+        run: |
+          if [ ! -f target/mediasort.jar ]; then
+            echo "ERROR: target/mediasort.jar not found!"
+            ls -lh target/ || true
+            exit 1
+          fi
+          echo "JAR found:"
+          ls -lh target/mediasort.jar
+
+      # ── GITHUB RELEASE ────────────────────────────────────────────────────
+      - name: "Create GitHub Release"
+        id: create_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.tag.outputs.name }}"
+          echo "[DEBUG] Creating release for tag: ${TAG}"
+          gh release create "${TAG}" \
+            target/mediasort.jar \
+            --title "mediasort ${TAG}" \
+            --notes "$(cat <<'EOF'
+          ## mediasort ${{ steps.tag.outputs.name }}
+
+          ### Download & run
+          ```bash
+          java -jar mediasort.jar <source> <destination> [options]
+          ```
+          Requires Java 21+. See `--help` for all options.
+          EOF
+          )" \
+            --verify-tag
+          echo "[DEBUG] Release created successfully"
+
+      # ── DEBUG : POST RELEASE ──────────────────────────────────────────────
+      - name: "[DEBUG] List releases"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release list --limit 5
