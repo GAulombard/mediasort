@@ -1,2 +1,23 @@
-/.idea/
-/mediasort.iml
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+
+# Java
+*.class
+*.jar
+
+# OS
+.DS_Store
+Thumbs.db
+*.stackdump
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
