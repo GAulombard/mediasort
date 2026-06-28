@@ -468,4 +468,70 @@ Après implémentation complète, `mediasort` doit :
 
 ---
 
+## 17. Release Process
+
+### Règle : toujours mettre à jour le CHANGELOG avant de tagger
+
+Le workflow GitHub Actions `release.yml` lit automatiquement `CHANGELOG.md` pour remplir le corps de la release. Sans entrée correspondante, un message de fallback générique est utilisé.
+
+### Étapes à suivre pour chaque release
+
+**1. Mettre à jour `CHANGELOG.md`**
+
+Déplacer les changements de `[Unreleased]` vers une nouvelle section versionnée :
+
+```markdown
+## [Unreleased]       ← toujours laisser vide, prêt pour la suite
+
+## [1.1.0] - 2026-07-15   ← nouvelle section
+
+### Added
+- ...
+
+### Fixed
+- ...
+```
+
+Catégories disponibles : `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`.
+
+**2. Commiter le CHANGELOG**
+
+```bash
+git add CHANGELOG.md
+git commit -m "chore: prepare release v1.1.0"
+```
+
+**3. Créer et pousser le tag**
+
+```bash
+git tag -a v1.1.0 -m "Release v1.1.0"
+git push origin v1.1.0
+```
+
+→ Le workflow `release.yml` se déclenche automatiquement, extrait la section `[1.1.0]` du CHANGELOG et crée la GitHub Release avec le JAR en asset.
+
+**4. Alternative manuelle (depuis l'UI GitHub)**
+
+`Actions → Release → Run workflow` → saisir le tag (qui doit déjà exister sur le repo).
+
+### Convention de nommage des tags
+
+- Format : `vMAJOR.MINOR.PATCH` (ex: `v1.0.0`, `v1.2.3`)
+- Préfixe `v` obligatoire — le workflow filtre sur `v*`
+- Suivre [Semantic Versioning](https://semver.org/) :
+  - **MAJOR** : breaking change
+  - **MINOR** : nouvelle fonctionnalité rétrocompatible
+  - **PATCH** : bugfix
+
+### Commandes utiles
+
+```bash
+git tag                          # lister les tags locaux
+git tag -d v1.1.0                # supprimer un tag local (si erreur)
+git push origin --delete v1.1.0  # supprimer un tag distant
+git tag -l "v*"                  # lister uniquement les tags de version
+```
+
+---
+
 *Ce document est la source de vérité pour l'implémentation. Tout écart doit être justifié.*
