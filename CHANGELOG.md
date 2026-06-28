@@ -11,7 +11,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.0] - 2026-06-28
+## [0.0.1] - 2026-06-28
 
 ### Added
 - CLI tool to recursively sort photos and videos into `YYYY/MM_month/` directories
