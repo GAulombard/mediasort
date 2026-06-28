@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> Outil CLI Java 21 pour trier photos et vidéos par année et mois.
+> Outil CLI Java 21+ pour trier photos et vidéos par année et mois.
 
 ## Prérequis
 
@@ -12,7 +12,7 @@
 ## Installation
 
 ```bash
-git clone https://github.com/votre-user/mediasort.git
+git clone https://github.com/GAulombard/mediasort.git
 cd mediasort
 chmod +x run.sh   # Linux/Mac uniquement
 ```
