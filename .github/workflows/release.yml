@@ -102,6 +102,37 @@ jobs:
           echo "JAR found:"
           ls -lh target/mediasort.jar
 
+      # ── CHANGELOG ─────────────────────────────────────────────────────────
+      - name: "Extract changelog for ${{ steps.tag.outputs.name }}"
+        id: changelog
+        run: |
+          TAG="${{ steps.tag.outputs.name }}"
+          VERSION="${TAG#v}"   # strip leading 'v'
+          echo "[DEBUG] Extracting changelog section for version: ${VERSION}"
+
+          # Extract lines between ## [VERSION] and the next ## [
+          NOTES=$(awk \
+            '/^## \['"${VERSION}"'\]/{found=1; next} /^## \[/{if(found) exit} found{print}' \
+            CHANGELOG.md \
+          )
+
+          if [ -z "${NOTES}" ]; then
+            echo "[WARN] No changelog entry found for ${VERSION} — using fallback"
+            NOTES="No changelog entry found for ${VERSION}. See CHANGELOG.md for details."
+          else
+            echo "[DEBUG] Changelog section extracted (${#NOTES} chars)"
+          fi
+
+          # Store multiline output safely
+          {
+            echo "notes<<EOF"
+            echo "${NOTES}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: "[DEBUG] Changelog preview (first 20 lines)"
+        run: echo "${{ steps.changelog.outputs.notes }}" | head -20
+
       # ── GITHUB RELEASE ────────────────────────────────────────────────────
       - name: "Create GitHub Release"
         id: create_release
@@ -110,19 +141,22 @@ jobs:
         run: |
           TAG="${{ steps.tag.outputs.name }}"
           echo "[DEBUG] Creating release for tag: ${TAG}"
+
+          # Write notes to a temp file to avoid shell quoting issues
+          cat > /tmp/release-notes.md << 'ENDOFNOTES'
+          ${{ steps.changelog.outputs.notes }}
+          ENDOFNOTES
+
+          printf '\n---\n\n**Download & run:**\n```bash\njava -jar mediasort.jar <source> <destination> [options]\n```\nRequires Java 21+. See `--help` for all options.\n' \
+            >> /tmp/release-notes.md
+
+          echo "[DEBUG] Full release notes:"
+          cat /tmp/release-notes.md
+
           gh release create "${TAG}" \
             target/mediasort.jar \
             --title "mediasort ${TAG}" \
-            --notes "$(cat <<'EOF'
-          ## mediasort ${{ steps.tag.outputs.name }}
-
-          ### Download & run
-          ```bash
-          java -jar mediasort.jar <source> <destination> [options]
-          ```
-          Requires Java 21+. See `--help` for all options.
-          EOF
-          )" \
+            --notes-file /tmp/release-notes.md \
             --verify-tag
           echo "[DEBUG] Release created successfully"
 
