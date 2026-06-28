@@ -4,10 +4,26 @@
 
 > Outil CLI Java 21+ pour trier photos et vidéos par année et mois.
 
-## Prérequis
+## Prerequisites
 
-- Java 21+
-- Maven 3.6+
+Java 21+ and Maven required
+
+### Linux/Mac/WSL
+```bash
+curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+sdk install java 21-tem
+sdk install maven
+```
+
+### Windows
+```bash
+winget install Microsoft.OpenJDK.21
+winget install Apache.Maven
+Verify installation
+java -version   # should show 21+
+mvn -version    # should show 3.x+
+```
 
 ## Installation
 
