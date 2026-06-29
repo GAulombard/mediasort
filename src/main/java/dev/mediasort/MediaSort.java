@@ -118,18 +118,23 @@ public class MediaSort {
     }
 
     private void updateProgress(int done, int total) {
-        if (args.verbose() || total == 0) return;
+        if (total == 0) return;
         int pct = (int) ((done * 100L) / total);
         int filled = (int) ((done * (long) BAR_WIDTH) / total);
-        var bar = new StringBuilder("\r[");
+        var bar = new StringBuilder("[");
         bar.append("=".repeat(filled));
         if (filled < BAR_WIDTH) {
             bar.append('>');
             bar.append(" ".repeat(BAR_WIDTH - filled - 1));
         }
         bar.append(String.format("] %d/%d (%d%%)", done, total, pct));
-        System.err.print(bar);
-        if (done >= total) System.err.println();
+        if (args.verbose()) {
+            // In verbose mode each file already scrolls output, so print as a static line
+            System.err.println(bar);
+        } else {
+            System.err.print("\r" + bar);
+            if (done >= total) System.err.println();
+        }
     }
 
     private boolean isExcluded(Path file) {
