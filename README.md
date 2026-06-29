@@ -36,6 +36,9 @@ chmod +x run.sh   # Linux/Mac uniquement
 ## Installation globale (optionnel)
 
 ```bash
+# Compiler le JAR
+mvn clean package
+
 # Installe mediasort dans ~/.mediasort/bin et ajoute au PATH automatiquement
 java -jar target/mediasort.jar --install
 
