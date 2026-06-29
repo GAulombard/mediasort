@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Orchestrates the full mediasort pipeline:
@@ -20,12 +21,14 @@ import java.util.concurrent.Semaphore;
 public class MediaSort {
 
     private static final DateTimeFormatter LOG_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final int BAR_WIDTH = 30;
 
     private final CliArgs args;
     private final FileScanner scanner = new FileScanner();
     private final DateExtractor extractor = new DateExtractor();
     private final FileProcessor processor = new FileProcessor();
     private final Stats stats = new Stats();
+    private final AtomicInteger progressCount = new AtomicInteger();
 
     private PrintWriter errorLog;
 
@@ -74,6 +77,7 @@ public class MediaSort {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } finally {
+                    updateProgress(progressCount.incrementAndGet(), files.size());
                     latch.countDown();
                 }
             });
@@ -111,6 +115,21 @@ public class MediaSort {
             System.err.println(msg);
             logError(file, e);
         }
+    }
+
+    private void updateProgress(int done, int total) {
+        if (args.verbose() || total == 0) return;
+        int pct = (int) ((done * 100L) / total);
+        int filled = (int) ((done * (long) BAR_WIDTH) / total);
+        var bar = new StringBuilder("\r[");
+        bar.append("=".repeat(filled));
+        if (filled < BAR_WIDTH) {
+            bar.append('>');
+            bar.append(" ".repeat(BAR_WIDTH - filled - 1));
+        }
+        bar.append(String.format("] %d/%d (%d%%)", done, total, pct));
+        System.err.print(bar);
+        if (done >= total) System.err.println();
     }
 
     private boolean isExcluded(Path file) {
