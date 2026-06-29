@@ -24,7 +24,7 @@ class MediaSortTest {
         Files.createFile(source.resolve("IMG_20240101.jpg"));
         Files.createFile(source.resolve("IMG_20240202.jpg"));
 
-        String err = captureStderr(() -> runDryRun(false));
+        String err = captureStdout(() -> runDryRun(false));
 
         assertThat(err).contains("2/2");
         assertThat(err).contains("100%");
@@ -36,7 +36,7 @@ class MediaSortTest {
             Files.createFile(source.resolve("IMG_2024010" + i + ".jpg"));
         }
 
-        String err = captureStderr(() -> runDryRun(false));
+        String err = captureStdout(() -> runDryRun(false));
 
         // Final step must be present; intermediate steps use \r so only last survives in buffer
         assertThat(err).contains("5/5");
@@ -44,7 +44,7 @@ class MediaSortTest {
 
     @Test
     void progressBarNotShownWhenNoFilesInNormalMode() throws Exception {
-        String err = captureStderr(() -> runDryRun(false));
+        String err = captureStdout(() -> runDryRun(false));
 
         assertThat(err).doesNotContain("%");
     }
@@ -55,28 +55,31 @@ class MediaSortTest {
     void progressBarShowsCounterInVerboseMode() throws Exception {
         Files.createFile(source.resolve("IMG_20240101.jpg"));
 
-        String err = captureStderr(() -> runDryRun(true));
+        String err = captureStdout(() -> runDryRun(true));
 
         assertThat(err).contains("1/1");
         assertThat(err).contains("100%");
     }
 
     @Test
-    void progressBarPrintsOneLinePerFileInVerboseMode() throws Exception {
+    void progressBarPrintsProgressLinesInVerboseMode() throws Exception {
         Files.createFile(source.resolve("IMG_20240101.jpg"));
         Files.createFile(source.resolve("IMG_20240202.jpg"));
         Files.createFile(source.resolve("IMG_20240303.jpg"));
 
-        String err = captureStderr(() -> runDryRun(true));
+        String out = captureStdout(() -> runDryRun(true));
 
-        // In verbose mode each file produces one progress line — expect 3 lines with %
-        long progressLines = err.lines().filter(l -> l.contains("%")).count();
-        assertThat(progressLines).isEqualTo(3);
+        // Virtual threads may interleave printLine reprints and updateProgress calls;
+        // at minimum one progress line per file, final state must reach 3/3.
+        long progressLines = out.lines().filter(l -> l.contains("%")).count();
+        assertThat(progressLines).isGreaterThanOrEqualTo(3);
+        assertThat(out).contains("3/3");
+        assertThat(out).contains("100%");
     }
 
     @Test
     void progressBarNotShownWhenNoFilesInVerboseMode() throws Exception {
-        String err = captureStderr(() -> runDryRun(true));
+        String err = captureStdout(() -> runDryRun(true));
 
         assertThat(err).doesNotContain("%");
     }
@@ -94,14 +97,14 @@ class MediaSortTest {
     @FunctionalInterface
     interface ThrowingRunnable { void run() throws Exception; }
 
-    private String captureStderr(ThrowingRunnable action) throws Exception {
-        PrintStream original = System.err;
+    private String captureStdout(ThrowingRunnable action) throws Exception {
+        PrintStream original = System.out;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(baos));
+        System.setOut(new PrintStream(baos));
         try {
             action.run();
         } finally {
-            System.setErr(original);
+            System.setOut(original);
         }
         return baos.toString();
     }

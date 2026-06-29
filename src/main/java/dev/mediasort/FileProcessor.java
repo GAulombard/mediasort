@@ -9,6 +9,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 /**
  * Copies or moves a single media file to its dated destination, handling duplicates.
@@ -40,16 +41,14 @@ public class FileProcessor {
             boolean move,
             boolean noMonth,
             boolean dryRun,
-            boolean verbose
+            Consumer<String> logger
     ) throws IOException {
         Path targetDir = resolveTargetDir(destinationRoot, date, noMonth);
         Path targetFile = resolveTargetFile(targetDir, sourceFile.getFileName().toString(), dryRun);
 
-        if (verbose) {
-            String action = dryRun ? "[DRY-RUN] " : "";
-            System.out.printf("%s%s %s -> %s%n",
-                    action, move ? "MOVE" : "COPY", sourceFile, targetFile);
-        }
+        String action = dryRun ? "[DRY-RUN] " : "";
+        logger.accept(String.format("%s%s %s -> %s",
+                action, move ? "MOVE" : "COPY", sourceFile, targetFile));
 
         if (!dryRun) {
             Files.createDirectories(targetDir);

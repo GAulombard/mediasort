@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Orchestrates the full mediasort pipeline:
@@ -29,6 +30,7 @@ public class MediaSort {
     private final FileProcessor processor = new FileProcessor();
     private final Stats stats = new Stats();
     private final AtomicInteger progressCount = new AtomicInteger();
+    private volatile String currentBar = "";
 
     private PrintWriter errorLog;
 
@@ -103,10 +105,11 @@ public class MediaSort {
                 stats.incrementYear(date.getYear());
             }
 
-            processor.process(file, args.destination(), date, args.move(), args.noMonth(), args.dryRun(), args.verbose());
+            Consumer<String> fileLogger = args.verbose() ? this::printLine : msg -> {};
+            processor.process(file, args.destination(), date, args.move(), args.noMonth(), args.dryRun(), fileLogger);
 
             if (!args.verbose() && result.source() == DateExtractor.DateSource.MODIFIED) {
-                System.out.printf("[WARN] Using modification date for: %s%n", file.getFileName());
+                printLine("[WARN] Using modification date for: " + file.getFileName());
             }
 
         } catch (Exception e) {
@@ -117,7 +120,23 @@ public class MediaSort {
         }
     }
 
-    private void updateProgress(int done, int total) {
+    /**
+     * Prints {@code line} to stdout, temporarily clearing the progress bar so it
+     * stays anchored at the bottom: erase bar → print content → reprint bar.
+     */
+    private synchronized void printLine(String line) {
+        if (!currentBar.isEmpty()) {
+            System.out.print("\r\033[2K");
+        }
+        System.out.println(line);
+        if (!currentBar.isEmpty()) {
+            System.out.print(currentBar);
+            System.out.flush();
+        }
+    }
+
+    /** Updates the sticky progress bar at the bottom of stdout. */
+    private synchronized void updateProgress(int done, int total) {
         if (total == 0) return;
         int pct = (int) ((done * 100L) / total);
         int filled = (int) ((done * (long) BAR_WIDTH) / total);
@@ -128,12 +147,13 @@ public class MediaSort {
             bar.append(" ".repeat(BAR_WIDTH - filled - 1));
         }
         bar.append(String.format("] %d/%d (%d%%)", done, total, pct));
-        if (args.verbose()) {
-            // In verbose mode each file already scrolls output, so print as a static line
-            System.err.println(bar);
+        currentBar = bar.toString();
+        System.out.print("\r" + currentBar);
+        if (done >= total) {
+            System.out.println();
+            currentBar = "";
         } else {
-            System.err.print("\r" + bar);
-            if (done >= total) System.err.println();
+            System.out.flush();
         }
     }
 
@@ -146,18 +166,18 @@ public class MediaSort {
 
     private void handleExcluded(Path file) {
         if (args.dryRun()) {
-            System.out.printf("[DRY-RUN] Would exclude: %s%n", file.getFileName());
+            printLine("[DRY-RUN] Would exclude: " + file.getFileName());
             return;
         }
         if (args.deleteExcluded()) {
             try {
                 Files.delete(file);
-                System.out.printf("[DELETED] %s%n", file.getFileName());
+                printLine("[DELETED] " + file.getFileName());
             } catch (IOException e) {
                 System.err.printf("[ERROR] Could not delete %s: %s%n", file.getFileName(), e.getMessage());
             }
         } else {
-            System.out.printf("[EXCLUDED] Skipping: %s%n", file.getFileName());
+            printLine("[EXCLUDED] Skipping: " + file.getFileName());
         }
         stats.incrementExcluded();
     }

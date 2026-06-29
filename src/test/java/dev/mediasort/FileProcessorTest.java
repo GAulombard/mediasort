@@ -27,7 +27,7 @@ class FileProcessorTest {
     void copyCreatesFileUnderYearAndMonthDirectories() throws IOException {
         Path source = write("photo.jpg");
 
-        Path result = processor.process(source, destDir, AUG_2023, false, false, false, false);
+        Path result = processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
 
         assertThat(result).exists();
         assertThat(result.getParent().getFileName().toString()).isEqualTo("08_august");
@@ -39,7 +39,7 @@ class FileProcessorTest {
     void noMonthOptionPlacesFileDirectlyUnderYear() throws IOException {
         Path source = write("photo.jpg");
 
-        Path result = processor.process(source, destDir, AUG_2023, false, true, false, false);
+        Path result = processor.process(source, destDir, AUG_2023, false, true, false, line -> {});
 
         assertThat(result.getParent().getFileName().toString()).isEqualTo("2023");
     }
@@ -48,7 +48,7 @@ class FileProcessorTest {
     void nullDatePlacesFileInUnknownDirectory() throws IOException {
         Path source = write("photo.jpg");
 
-        Path result = processor.process(source, destDir, null, false, false, false, false);
+        Path result = processor.process(source, destDir, null, false, false, false, line -> {});
 
         assertThat(result.getParent().getFileName().toString()).isEqualTo("unknown");
         assertThat(result).exists();
@@ -64,7 +64,7 @@ class FileProcessorTest {
         for (int m = 1; m <= 12; m++) {
             Path source = write("photo" + m + ".jpg");
             LocalDateTime date = LocalDateTime.of(2024, m, 1, 0, 0);
-            Path result = processor.process(source, destDir, date, false, false, false, false);
+            Path result = processor.process(source, destDir, date, false, false, false, line -> {});
             assertThat(result.getParent().getFileName().toString())
                     .as("Month %d", m)
                     .isEqualTo(expected[m - 1]);
@@ -77,7 +77,7 @@ class FileProcessorTest {
     void copyKeepsSourceIntact() throws IOException {
         Path source = write("photo.jpg");
 
-        processor.process(source, destDir, AUG_2023, false, false, false, false);
+        processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
 
         assertThat(source).exists();
     }
@@ -86,7 +86,7 @@ class FileProcessorTest {
     void moveDeletesSource() throws IOException {
         Path source = write("photo.jpg");
 
-        processor.process(source, destDir, AUG_2023, true, false, false, false);
+        processor.process(source, destDir, AUG_2023, true, false, false, line -> {});
 
         assertThat(source).doesNotExist();
     }
@@ -95,7 +95,7 @@ class FileProcessorTest {
     void movedFileExistsAtDestination() throws IOException {
         Path source = write("video.mp4");
 
-        Path result = processor.process(source, destDir, AUG_2023, true, false, false, false);
+        Path result = processor.process(source, destDir, AUG_2023, true, false, false, line -> {});
 
         assertThat(result).exists();
     }
@@ -106,7 +106,7 @@ class FileProcessorTest {
     void dryRunDoesNotCreateAnyFile() throws IOException {
         Path source = write("photo.jpg");
 
-        Path result = processor.process(source, destDir, AUG_2023, false, false, true, false);
+        Path result = processor.process(source, destDir, AUG_2023, false, false, true, line -> {});
 
         assertThat(result).doesNotExist();
         assertThat(source).exists();
@@ -116,7 +116,7 @@ class FileProcessorTest {
     void dryRunReturnsExpectedDestinationPath() throws IOException {
         Path source = write("photo.jpg");
 
-        Path result = processor.process(source, destDir, AUG_2023, false, false, true, false);
+        Path result = processor.process(source, destDir, AUG_2023, false, false, true, line -> {});
 
         assertThat(result.toString()).contains("2023");
         assertThat(result.toString()).contains("08_august");
@@ -128,8 +128,8 @@ class FileProcessorTest {
     void firstDuplicateGetsSuffix001() throws IOException {
         Path source = write("photo.jpg");
 
-        processor.process(source, destDir, AUG_2023, false, false, false, false);
-        Path second = processor.process(source, destDir, AUG_2023, false, false, false, false);
+        processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
+        Path second = processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
 
         assertThat(second.getFileName().toString()).isEqualTo("photo_001.jpg");
         assertThat(second).exists();
@@ -139,9 +139,9 @@ class FileProcessorTest {
     void secondDuplicateGetsSuffix002() throws IOException {
         Path source = write("photo.jpg");
 
-        processor.process(source, destDir, AUG_2023, false, false, false, false);
-        processor.process(source, destDir, AUG_2023, false, false, false, false);
-        Path third = processor.process(source, destDir, AUG_2023, false, false, false, false);
+        processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
+        processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
+        Path third = processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
 
         assertThat(third.getFileName().toString()).isEqualTo("photo_002.jpg");
         assertThat(third).exists();
@@ -151,8 +151,8 @@ class FileProcessorTest {
     void duplicateHandlingPreservesExtension() throws IOException {
         Path source = write("clip.mp4");
 
-        processor.process(source, destDir, AUG_2023, false, false, false, false);
-        Path second = processor.process(source, destDir, AUG_2023, false, false, false, false);
+        processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
+        Path second = processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
 
         assertThat(second.getFileName().toString()).isEqualTo("clip_001.mp4");
     }
@@ -161,7 +161,7 @@ class FileProcessorTest {
     void fileWithoutExtensionIsHandled() throws IOException {
         Path source = Files.write(sourceDir.resolve("noext"), new byte[]{1, 2, 3});
 
-        Path result = processor.process(source, destDir, AUG_2023, false, false, false, false);
+        Path result = processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
 
         assertThat(result).exists();
         assertThat(result.getFileName().toString()).isEqualTo("noext");
@@ -171,8 +171,8 @@ class FileProcessorTest {
     void duplicateWithoutExtensionGetsSuffix() throws IOException {
         Path source = Files.write(sourceDir.resolve("noext"), new byte[]{1, 2, 3});
 
-        processor.process(source, destDir, AUG_2023, false, false, false, false);
-        Path second = processor.process(source, destDir, AUG_2023, false, false, false, false);
+        processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
+        Path second = processor.process(source, destDir, AUG_2023, false, false, false, line -> {});
 
         assertThat(second.getFileName().toString()).isEqualTo("noext_001");
     }
