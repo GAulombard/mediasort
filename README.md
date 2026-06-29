@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> Outil CLI Java 21+ pour trier photos et vidéos par année et mois.
+> Java 21+ CLI tool to sort photos and videos by year and month.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ sdk install maven
 ```bash
 winget install Microsoft.OpenJDK.21
 winget install Apache.Maven
-Verify installation
+# Verify installation
 java -version   # should show 21+
 mvn -version    # should show 3.x+
 ```
@@ -30,51 +30,51 @@ mvn -version    # should show 3.x+
 ```bash
 git clone https://github.com/GAulombard/mediasort.git
 cd mediasort
-chmod +x run.sh   # Linux/Mac uniquement
+chmod +x run.sh   # Linux/Mac only
 ```
 
-## Installation globale (optionnel)
+## Global installation (optional)
 
 ```bash
-# Compiler le JAR
+# Build the JAR
 mvn clean package
 
-# Installe mediasort dans ~/.mediasort/bin et ajoute au PATH automatiquement
+# Install mediasort into ~/.mediasort/bin and add to PATH automatically
 java -jar target/mediasort.jar --install
 
-# Puis depuis n'importe où :
+# Then from anywhere:
 mediasort /photos --dry-run
 ```
 
-## Utilisation
+## Usage
 
 ```bash
-# 1. Simuler d'abord (recommandé) — destination par défaut : /photos/mediasort/
-./run.sh /chemin/source --dry-run
+# 1. Simulate first (recommended) — default destination: /photos/mediasort/
+./run.sh /path/to/source --dry-run
 
-# 2. Copie réelle avec destination explicite
-./run.sh /chemin/source /chemin/destination
+# 2. Real copy with explicit destination
+./run.sh /path/to/source /path/to/destination
 
-# 3. Déplacement (supprime les originaux)
-./run.sh /chemin/source /chemin/destination --move
+# 3. Move (deletes originals)
+./run.sh /path/to/source /path/to/destination --move
 
-# 4. Tri par année uniquement (sans sous-dossier mois)
-./run.sh /chemin/source /chemin/destination --no-month
+# 4. Sort by year only (no month subdirectory)
+./run.sh /path/to/source /path/to/destination --no-month
 
-# 5. Avec plus de threads et logs détaillés
-./run.sh /chemin/source /chemin/destination --verbose --threads=8
+# 5. With more threads and detailed logs
+./run.sh /path/to/source /path/to/destination --verbose --threads=8
 
-# 6. Ignorer les screenshots (insensible à la casse)
-./run.sh /chemin/source --exclude-pattern screenshot
+# 6. Exclude screenshots (case-insensitive)
+./run.sh /path/to/source --exclude-pattern screenshot
 
-# 7. Plusieurs patterns d'exclusion
-./run.sh /chemin/source --exclude-pattern screenshot --exclude-pattern IMG_BURST
+# 7. Multiple exclusion patterns
+./run.sh /path/to/source --exclude-pattern screenshot --exclude-pattern IMG_BURST
 
-# 8. Supprimer les fichiers exclus de la source
-./run.sh /chemin/source --exclude-pattern screenshot --delete-excluded
+# 8. Delete excluded files from source
+./run.sh /path/to/source --exclude-pattern screenshot --delete-excluded
 ```
 
-Windows :
+Windows:
 
 ```bat
 run.bat "C:\Photos" --dry-run
@@ -82,7 +82,7 @@ run.bat "C:\Photos" "D:\Backup" --move --verbose
 run.bat "C:\Photos" --exclude-pattern screenshot --delete-excluded
 ```
 
-## Structure de sortie
+## Output structure
 
 ```
 destination/
@@ -91,37 +91,37 @@ destination/
 │   └── 08_august/
 ├── 2023/
 │   └── 12_december/
-└── unknown/    ← fichiers sans date détectable
+└── unknown/    ← files with no detectable date
 ```
 
-## Sources de date (ordre de priorité)
+## Date sources (priority order)
 
-1. **JSON Google Takeout** — fichier `.json` sidecar portant le même nom
-2. **EXIF** — métadonnées embarquées via `metadata-extractor`
-3. **Nom de fichier** — patterns `IMG_YYYYMMDD`, `VID-YYYYMMDD`, `YYYYMMDD_HHmmss`, `Screenshot_YYYY-MM-DD`
-4. **Date de modification** — fallback (non fiable, signalé en warning)
+1. **Google Takeout JSON** — sidecar `.json` file with the same name
+2. **EXIF** — embedded metadata via `metadata-extractor`
+3. **Filename** — patterns `IMG_YYYYMMDD`, `VID-YYYYMMDD`, `YYYYMMDD_HHmmss`, `Screenshot_YYYY-MM-DD`
+4. **Modification date** — fallback (unreliable, reported as warning)
 
-## Formats supportés
+## Supported formats
 
-**Images :** JPG, PNG, GIF, BMP, WebP, HEIC, HEIF, TIFF, RAW (CR2, CR3, NEF, ARW, DNG, ORF, RW2)  
-**Vidéos :** MP4, MOV, AVI, MKV, WMV, M4V, 3GP, MTS, M2TS
+**Images:** JPG, PNG, GIF, BMP, WebP, HEIC, HEIF, TIFF, RAW (CR2, CR3, NEF, ARW, DNG, ORF, RW2)  
+**Videos:** MP4, MOV, AVI, MKV, WMV, M4V, 3GP, MTS, M2TS
 
-## Options complètes
+## All options
 
-| Option | Description | Défaut |
-|--------|-------------|--------|
-| `<source>` | Dossier source (requis) | — |
-| `<destination>` | Dossier destination | `<source>/mediasort/` |
-| `--move` | Déplacer au lieu de copier | false |
-| `--no-month` | Tri par année uniquement | false |
-| `--dry-run` | Simulation sans écriture | false |
-| `--threads=N` | Nombre de virtual threads | 4 |
-| `--verbose` | Logs détaillés | false |
-| `--exclude-pattern <pat>` | Ignorer les fichiers dont le nom contient `<pat>` (répétable, insensible à la casse) | — |
-| `--delete-excluded` | Supprimer les fichiers exclus de la source | false |
-| `--install` | Installer mediasort globalement (`~/.mediasort/bin`) | — |
-| `--rebuild` | Force la recompilation du JAR | false |
-| `--help` | Affiche l'aide | — |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `<source>` | Source directory (required) | — |
+| `<destination>` | Destination directory | `<source>/mediasort/` |
+| `--move` | Move instead of copy | false |
+| `--no-month` | Sort by year only | false |
+| `--dry-run` | Simulate, no files written | false |
+| `--threads=N` | Number of virtual threads | 4 |
+| `--verbose` | Detailed logs | false |
+| `--exclude-pattern <pat>` | Skip files whose name contains `<pat>` (repeatable, case-insensitive) | — |
+| `--delete-excluded` | Delete excluded files from source | false |
+| `--install` | Install mediasort globally (`~/.mediasort/bin`) | — |
+| `--rebuild` | Force JAR recompilation | false |
+| `--help` | Show help | — |
 
 ## License
 
