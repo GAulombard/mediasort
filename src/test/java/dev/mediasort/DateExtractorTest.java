@@ -37,7 +37,6 @@ class DateExtractorTest {
         DateExtractor.DateResult result = extractor.extract(file);
 
         assertThat(result.source()).isEqualTo(DateExtractor.DateSource.FILENAME);
-        assertThat(result.isReliable()).isTrue();
         assertThat(result.date()).isPresent();
         LocalDateTime date = result.date().get();
         assertThat(date.getYear()).isEqualTo(year);
@@ -62,24 +61,23 @@ class DateExtractorTest {
     }
 
     @Test
-    void filenameWithNoPatternFallsBackToModified() throws IOException {
+    void filenameWithNoPatternReturnsUnknown() throws IOException {
         Path file = Files.write(tempDir.resolve("random_nodate.jpg"), new byte[0]);
 
         DateExtractor.DateResult result = extractor.extract(file);
 
-        assertThat(result.source()).isEqualTo(DateExtractor.DateSource.MODIFIED);
-        assertThat(result.isReliable()).isFalse();
-        assertThat(result.date()).isPresent();
+        assertThat(result.source()).isEqualTo(DateExtractor.DateSource.UNKNOWN);
+        assertThat(result.date()).isEmpty();
     }
 
     @Test
     void outOfRangeMonthInFilenameIsIgnored() throws IOException {
-        // Month 13 is invalid → falls back to MODIFIED
+        // Month 13 is invalid → no strategy matches → UNKNOWN
         Path file = Files.write(tempDir.resolve("IMG_20231399_bad.jpg"), new byte[0]);
 
         DateExtractor.DateResult result = extractor.extract(file);
 
-        assertThat(result.source()).isEqualTo(DateExtractor.DateSource.MODIFIED);
+        assertThat(result.source()).isEqualTo(DateExtractor.DateSource.UNKNOWN);
     }
 
     // ---- JSON sidecar ----
@@ -94,7 +92,6 @@ class DateExtractorTest {
         DateExtractor.DateResult result = extractor.extract(file);
 
         assertThat(result.source()).isEqualTo(DateExtractor.DateSource.JSON);
-        assertThat(result.isReliable()).isTrue();
         assertThat(result.date().get().getYear()).isEqualTo(2021);
     }
 
@@ -173,20 +170,19 @@ class DateExtractorTest {
 
         DateExtractor.DateResult result = extractor.extract(file);
 
-        assertThat(result.source()).isIn(DateExtractor.DateSource.FILENAME, DateExtractor.DateSource.MODIFIED);
+        assertThat(result.source()).isIn(DateExtractor.DateSource.FILENAME, DateExtractor.DateSource.UNKNOWN);
     }
 
-    // ---- Modified date (fallback) ----
+    // ---- Unknown (no date detectable) ----
 
     @Test
-    void modifiedDateIsAlwaysPresent() throws IOException {
+    void fileWithNoDatableInfoReturnsUnknown() throws IOException {
         Path file = Files.write(tempDir.resolve("nodatefile.jpg"), new byte[0]);
 
         DateExtractor.DateResult result = extractor.extract(file);
 
-        assertThat(result.date()).isPresent();
-        assertThat(result.source()).isEqualTo(DateExtractor.DateSource.MODIFIED);
-        assertThat(result.isReliable()).isFalse();
+        assertThat(result.source()).isEqualTo(DateExtractor.DateSource.UNKNOWN);
+        assertThat(result.date()).isEmpty();
     }
 
     // ---- Helper ----

@@ -23,19 +23,15 @@ import java.util.regex.Pattern;
  */
 public class DateExtractor {
 
-    public enum DateSource { JSON, EXIF, FILENAME, MODIFIED }
+    public enum DateSource { JSON, EXIF, FILENAME, UNKNOWN }
 
     /**
      * Result of a date extraction attempt.
-     *
-     * @param date       the extracted date, if any
-     * @param source     which strategy produced the result
-     * @param isReliable false when the source is the modification date fallback
+     * {@code source} is {@link DateSource#UNKNOWN} when no strategy found a date.
      */
     public record DateResult(
             Optional<LocalDateTime> date,
-            DateSource source,
-            boolean isReliable
+            DateSource source
     ) {}
 
     // Patterns ordered by specificity
@@ -46,19 +42,18 @@ public class DateExtractor {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    /** Tries all 4 strategies in priority order and returns the first successful result. */
+    /** Tries 3 strategies in priority order; returns UNKNOWN source when none succeeds. */
     public DateResult extract(Path file) {
         var json = fromJson(file);
-        if (json.isPresent()) return new DateResult(json, DateSource.JSON, true);
+        if (json.isPresent()) return new DateResult(json, DateSource.JSON);
 
         var exif = fromExif(file);
-        if (exif.isPresent()) return new DateResult(exif, DateSource.EXIF, true);
+        if (exif.isPresent()) return new DateResult(exif, DateSource.EXIF);
 
         var name = fromFilename(file.getFileName().toString());
-        if (name.isPresent()) return new DateResult(name, DateSource.FILENAME, true);
+        if (name.isPresent()) return new DateResult(name, DateSource.FILENAME);
 
-        var mod = fromModified(file);
-        return new DateResult(mod, DateSource.MODIFIED, false);
+        return new DateResult(Optional.empty(), DateSource.UNKNOWN);
     }
 
     // --- Strategy 1: Google Takeout JSON sidecar ---
@@ -141,14 +136,4 @@ public class DateExtractor {
         }
     }
 
-    // --- Strategy 4: file modification date (fallback) ---
-
-    private Optional<LocalDateTime> fromModified(Path file) {
-        try {
-            var time = Files.getLastModifiedTime(file);
-            return Optional.of(LocalDateTime.ofInstant(time.toInstant(), ZoneId.systemDefault()));
-        } catch (IOException e) {
-            return Optional.empty();
-        }
-    }
 }

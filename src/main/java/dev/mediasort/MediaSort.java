@@ -108,10 +108,6 @@ public class MediaSort {
             Consumer<String> fileLogger = args.verbose() ? this::printLine : msg -> {};
             processor.process(file, args.destination(), date, args.move(), args.noMonth(), args.dryRun(), fileLogger);
 
-            if (!args.verbose() && result.source() == DateExtractor.DateSource.MODIFIED) {
-                printLine("[WARN] Using modification date for: " + file.getFileName());
-            }
-
         } catch (Exception e) {
             stats.incrementErrors();
             String msg = String.format("[ERROR] %s: %s", file, e.getMessage());
