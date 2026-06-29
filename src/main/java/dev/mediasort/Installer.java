@@ -29,9 +29,9 @@ public class Installer {
 
         if (isWindows) {
             generateBatchWrapper(installDir);
-        } else {
-            generateShellWrapper(installDir);
         }
+        // Always generate a shell wrapper: needed on Unix and for Git Bash on Windows
+        generateShellWrapper(installDir);
 
         if (!tryAddToPath(installDir, isWindows)) {
             printPathInstructions(installDir, isWindows);
@@ -69,11 +69,13 @@ public class Installer {
     }
 
     private boolean tryAddToPath(Path installDir, boolean isWindows) {
-        try {
-            return isWindows ? addToPathWindows(installDir) : addToPathUnix(installDir);
-        } catch (Exception e) {
-            return false;
+        boolean ok = false;
+        if (isWindows) {
+            try { ok = addToPathWindows(installDir); } catch (Exception ignored) {}
         }
+        // Always update ~/.bashrc so Git Bash (and Unix) users can run mediasort
+        try { ok = addToPathUnix() || ok; } catch (Exception ignored) {}
+        return ok;
     }
 
     private boolean addToPathWindows(Path installDir) throws IOException, InterruptedException {
@@ -115,12 +117,12 @@ public class Installer {
         return false;
     }
 
-    private boolean addToPathUnix(Path installDir) throws IOException {
-        String dir = installDir.toAbsolutePath().toString();
+    private boolean addToPathUnix() throws IOException {
+        // Use $HOME so the line works on Unix and in Git Bash on Windows
+        String exportLine = "export PATH=\"$HOME/.mediasort/bin:$PATH\"";
         Path rcFile = Path.of(System.getProperty("user.home"), ".bashrc");
-        String exportLine = "export PATH=\"" + dir + ":$PATH\"";
 
-        if (Files.exists(rcFile) && Files.readString(rcFile).contains(dir)) {
+        if (Files.exists(rcFile) && Files.readString(rcFile).contains(".mediasort/bin")) {
             System.out.println("PATH already configured in ~/.bashrc");
             return true;
         }
@@ -128,7 +130,7 @@ public class Installer {
         Files.writeString(rcFile, "\n# mediasort\n" + exportLine + "\n",
                 StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         System.out.println("Added to ~/.bashrc: " + exportLine);
-        System.out.println("Run: source ~/.bashrc");
+        System.out.println("Run: source ~/.bashrc  (or open a new terminal)");
         return true;
     }
 
@@ -136,9 +138,10 @@ public class Installer {
         String dir = installDir.toAbsolutePath().toString();
         System.out.println("\nAdd this directory to your PATH manually:");
         if (isWindows) {
-            System.out.printf("  setx PATH \"%%PATH%%;%s\"%n", dir);
+            System.out.printf("  CMD/PowerShell: setx PATH \"%%PATH%%;%s\"%n", dir);
+            System.out.println("  Git Bash: echo 'export PATH=\"$HOME/.mediasort/bin:$PATH\"' >> ~/.bashrc && source ~/.bashrc");
         } else {
-            System.out.printf("  echo 'export PATH=\"%s:$PATH\"' >> ~/.bashrc%n", dir);
+            System.out.println("  echo 'export PATH=\"$HOME/.mediasort/bin:$PATH\"' >> ~/.bashrc");
             System.out.println("  source ~/.bashrc");
         }
     }
