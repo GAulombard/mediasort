@@ -9,6 +9,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-06-29
+
 ### Added
 - `--install` flag: copies JAR to `~/.mediasort/bin/` and generates platform wrapper scripts (`mediasort.bat` for CMD/PowerShell, `mediasort` shell script for Git Bash/Unix); auto-adds directory to PATH via Windows registry and `~/.bashrc`
 - Optional `<destination>` argument: defaults to `<source>/mediasort/` when omitted; resolved destination is always printed at startup
@@ -19,7 +21,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Fixed
 - `--install` on Windows now also generates a Unix shell wrapper (`mediasort`) so Git Bash users can invoke the command directly
 - `--install` now updates `~/.bashrc` with `$HOME/.mediasort/bin` (portable path) even on Windows, enabling Git Bash PATH resolution without a registry-dependent session restart
-
+- ASCII progress bar now correctly updates in place on Windows terminals (CMD, PowerShell, Git Bash)
 ---
 
 ## [0.0.1] - 2026-06-28
