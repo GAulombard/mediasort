@@ -33,13 +33,23 @@ cd mediasort
 chmod +x run.sh   # Linux/Mac uniquement
 ```
 
+## Installation globale (optionnel)
+
+```bash
+# Installe mediasort dans ~/.mediasort/bin et ajoute au PATH automatiquement
+java -jar target/mediasort.jar --install
+
+# Puis depuis n'importe où :
+mediasort /photos --dry-run
+```
+
 ## Utilisation
 
 ```bash
-# 1. Simuler d'abord (recommandé)
-./run.sh /chemin/source /chemin/destination --dry-run
+# 1. Simuler d'abord (recommandé) — destination par défaut : /photos/mediasort/
+./run.sh /chemin/source --dry-run
 
-# 2. Copie réelle
+# 2. Copie réelle avec destination explicite
 ./run.sh /chemin/source /chemin/destination
 
 # 3. Déplacement (supprime les originaux)
@@ -50,13 +60,23 @@ chmod +x run.sh   # Linux/Mac uniquement
 
 # 5. Avec plus de threads et logs détaillés
 ./run.sh /chemin/source /chemin/destination --verbose --threads=8
+
+# 6. Ignorer les screenshots (insensible à la casse)
+./run.sh /chemin/source --exclude-pattern screenshot
+
+# 7. Plusieurs patterns d'exclusion
+./run.sh /chemin/source --exclude-pattern screenshot --exclude-pattern IMG_BURST
+
+# 8. Supprimer les fichiers exclus de la source
+./run.sh /chemin/source --exclude-pattern screenshot --delete-excluded
 ```
 
 Windows :
 
 ```bat
-run.bat "C:\Photos" "D:\Backup" --dry-run          # ou ./run.bat...
-run.bat "C:\Photos" "D:\Backup" --move --verbose   # ou ./run.bat...
+run.bat "C:\Photos" --dry-run
+run.bat "C:\Photos" "D:\Backup" --move --verbose
+run.bat "C:\Photos" --exclude-pattern screenshot --delete-excluded
 ```
 
 ## Structure de sortie
@@ -87,11 +107,16 @@ destination/
 
 | Option | Description | Défaut |
 |--------|-------------|--------|
+| `<source>` | Dossier source (requis) | — |
+| `<destination>` | Dossier destination | `<source>/mediasort/` |
 | `--move` | Déplacer au lieu de copier | false |
 | `--no-month` | Tri par année uniquement | false |
 | `--dry-run` | Simulation sans écriture | false |
 | `--threads=N` | Nombre de virtual threads | 4 |
 | `--verbose` | Logs détaillés | false |
+| `--exclude-pattern <pat>` | Ignorer les fichiers dont le nom contient `<pat>` (répétable, insensible à la casse) | — |
+| `--delete-excluded` | Supprimer les fichiers exclus de la source | false |
+| `--install` | Installer mediasort globalement (`~/.mediasort/bin`) | — |
 | `--rebuild` | Force la recompilation du JAR | false |
 | `--help` | Affiche l'aide | — |
 

@@ -20,8 +20,20 @@ class StatsTest {
         assertThat(result.total()).isZero();
         assertThat(result.unknown()).isZero();
         assertThat(result.errors()).isZero();
+        assertThat(result.excluded()).isZero();
         assertThat(result.byYear()).isEmpty();
         assertThat(result.elapsedMs()).isEqualTo(100);
+    }
+
+    @Test
+    void excludedCountIsAccumulated() {
+        Stats stats = new Stats();
+
+        stats.incrementExcluded();
+        stats.incrementExcluded();
+        stats.incrementExcluded();
+
+        assertThat(stats.snapshot(0).excluded()).isEqualTo(3);
     }
 
     @Test

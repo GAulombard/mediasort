@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
@@ -40,7 +41,8 @@ public class MediaSort {
             initErrorLog();
         }
 
-        System.out.printf("Scanning: %s%n", args.source());
+        System.out.printf("Scanning:    %s%n", args.source());
+        System.out.printf("Destination: %s%n", args.destination());
         List<Path> files = scanner.scan(args.source());
         System.out.printf("%d media file(s) found.%n%n", files.size());
 
@@ -81,6 +83,11 @@ public class MediaSort {
     }
 
     private void processOne(Path file) {
+        if (isExcluded(file)) {
+            handleExcluded(file);
+            return;
+        }
+
         stats.incrementTotal();
         try {
             DateExtractor.DateResult result = extractor.extract(file);
@@ -104,6 +111,31 @@ public class MediaSort {
             System.err.println(msg);
             logError(file, e);
         }
+    }
+
+    private boolean isExcluded(Path file) {
+        if (args.excludePatterns().isEmpty()) return false;
+        String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
+        return args.excludePatterns().stream()
+                .anyMatch(p -> name.contains(p.toLowerCase(Locale.ROOT)));
+    }
+
+    private void handleExcluded(Path file) {
+        if (args.dryRun()) {
+            System.out.printf("[DRY-RUN] Would exclude: %s%n", file.getFileName());
+            return;
+        }
+        if (args.deleteExcluded()) {
+            try {
+                Files.delete(file);
+                System.out.printf("[DELETED] %s%n", file.getFileName());
+            } catch (IOException e) {
+                System.err.printf("[ERROR] Could not delete %s: %s%n", file.getFileName(), e.getMessage());
+            }
+        } else {
+            System.out.printf("[EXCLUDED] Skipping: %s%n", file.getFileName());
+        }
+        stats.incrementExcluded();
     }
 
     private void initErrorLog() {

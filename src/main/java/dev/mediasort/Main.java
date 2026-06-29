@@ -3,6 +3,7 @@
 package dev.mediasort;
 
 import java.io.PrintStream;
+import java.util.Arrays;
 
 /**
  * Entry point — parses CLI args then delegates to {@link MediaSort}.
@@ -15,6 +16,16 @@ public class Main {
             System.setOut(new PrintStream(System.out, true, "UTF-8"));
             System.setErr(new PrintStream(System.err, true, "UTF-8"));
         } catch (Exception ignored) {}
+
+        if (Arrays.asList(args).contains("--install")) {
+            try {
+                new Installer().install();
+            } catch (Exception e) {
+                System.err.println("Install failed: " + e.getMessage());
+                System.exit(1);
+            }
+            return;
+        }
 
         CliArgs cliArgs = CliArgs.parse(args);
         try {

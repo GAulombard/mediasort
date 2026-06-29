@@ -26,6 +26,41 @@ class CliArgsTest {
         assertThat(args.threads()).isEqualTo(4);
         assertThat(args.verbose()).isFalse();
         assertThat(args.rebuild()).isFalse();
+        assertThat(args.excludePatterns()).isEmpty();
+        assertThat(args.deleteExcluded()).isFalse();
+    }
+
+    @Test
+    void destinationDefaultsToSourceSubfolder() {
+        CliArgs args = CliArgs.parse(new String[]{source.toString()});
+
+        assertThat(args.source()).isEqualTo(source);
+        assertThat(args.destination()).isEqualTo(source.resolve("mediasort"));
+    }
+
+    @Test
+    void singleExcludePatternIsParsed() {
+        CliArgs args = CliArgs.parse(new String[]{source.toString(), dest.toString(),
+                "--exclude-pattern", "screenshot"});
+
+        assertThat(args.excludePatterns()).containsExactly("screenshot");
+    }
+
+    @Test
+    void multipleExcludePatternsAreParsed() {
+        CliArgs args = CliArgs.parse(new String[]{source.toString(), dest.toString(),
+                "--exclude-pattern", "screenshot",
+                "--exclude-pattern", "IMG_BURST"});
+
+        assertThat(args.excludePatterns()).containsExactly("screenshot", "IMG_BURST");
+    }
+
+    @Test
+    void deleteExcludedFlagIsRecognised() {
+        CliArgs args = CliArgs.parse(new String[]{source.toString(), dest.toString(),
+                "--exclude-pattern", "screenshot", "--delete-excluded"});
+
+        assertThat(args.deleteExcluded()).isTrue();
     }
 
     @Test

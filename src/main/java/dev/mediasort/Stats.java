@@ -13,14 +13,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Stats {
 
-    private final AtomicInteger total   = new AtomicInteger();
-    private final AtomicInteger unknown = new AtomicInteger();
-    private final AtomicInteger errors  = new AtomicInteger();
+    private final AtomicInteger total    = new AtomicInteger();
+    private final AtomicInteger unknown  = new AtomicInteger();
+    private final AtomicInteger errors   = new AtomicInteger();
+    private final AtomicInteger excluded = new AtomicInteger();
     private final ConcurrentHashMap<Integer, AtomicInteger> byYear = new ConcurrentHashMap<>();
 
-    public void incrementTotal()   { total.incrementAndGet(); }
-    public void incrementUnknown() { unknown.incrementAndGet(); }
-    public void incrementErrors()  { errors.incrementAndGet(); }
+    public void incrementTotal()    { total.incrementAndGet(); }
+    public void incrementUnknown()  { unknown.incrementAndGet(); }
+    public void incrementErrors()   { errors.incrementAndGet(); }
+    public void incrementExcluded() { excluded.incrementAndGet(); }
 
     public void incrementYear(int year) {
         byYear.computeIfAbsent(year, y -> new AtomicInteger()).incrementAndGet();
@@ -30,7 +32,7 @@ public class Stats {
     public Result snapshot(long elapsedMs) {
         Map<Integer, Integer> yearMap = new TreeMap<>();
         byYear.forEach((y, c) -> yearMap.put(y, c.get()));
-        return new Result(total.get(), yearMap, unknown.get(), errors.get(), elapsedMs);
+        return new Result(total.get(), yearMap, unknown.get(), errors.get(), excluded.get(), elapsedMs);
     }
 
     /**
@@ -41,6 +43,7 @@ public class Stats {
             Map<Integer, Integer> byYear,
             int unknown,
             int errors,
+            int excluded,
             long elapsedMs
     ) {
         public void print() {
@@ -57,6 +60,9 @@ public class Stats {
                 System.out.printf("  └─ Unknown    : %d%n", unknown);
             }
 
+            if (excluded > 0) {
+                System.out.printf("Excluded         : %d%n", excluded);
+            }
             System.out.printf("Errors           : %d%n", errors);
             System.out.printf("Elapsed          : %.1fs%n", elapsedMs / 1000.0);
             System.out.println("==================");

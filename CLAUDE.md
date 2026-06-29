@@ -82,18 +82,21 @@ mp4, mov, avi, mkv, wmv, m4v, 3gp, mts, m2ts
 ## 6. Arguments CLI
 
 ```
-mediasort <source> <destination> [options]
+mediasort <source> [destination] [options]
 ```
 
 | Option | Description | Défaut |
 |--------|-------------|--------|
 | `<source>` | Dossier contenant les médias | — |
-| `<destination>` | Dossier de destination | — |
+| `<destination>` | Dossier de destination | `<source>/mediasort/` |
 | `--move` | Déplacer au lieu de copier | `false` (copie) |
 | `--no-month` | Tri par année uniquement (pas de sous-dossier mois) | `false` |
 | `--dry-run` | Simulation, aucune écriture disque | `false` |
 | `--threads=N` | Nombre de threads (virtual threads) | `4` |
 | `--verbose` | Logs détaillés | `false` |
+| `--exclude-pattern <pat>` | Ignorer les fichiers dont le nom contient `<pat>` (répétable, insensible à la casse) | — |
+| `--delete-excluded` | Supprimer les fichiers exclus de la source au lieu de les ignorer | `false` |
+| `--install` | Installer mediasort globalement (`~/.mediasort/bin`) | — |
 | `--rebuild` | Force recompilation du JAR | `false` |
 | `--help` | Affiche l'aide | — |
 
@@ -101,26 +104,32 @@ mediasort <source> <destination> [options]
 
 ```java
 """
-Usage: mediasort <source> <destination> [options]
+Usage: mediasort <source> [destination] [options]
 
-Trie automatiquement vos photos et vidéos par année et mois.
+Automatically sorts photos and videos by year and month.
 
-Arguments positionnels :
-  source        Dossier contenant les fichiers à trier
-  destination   Dossier de destination (créé si absent)
+Positional arguments:
+  source        Directory containing the files to sort
+  destination   Destination directory (default: <source>/mediasort/)
 
-Options :
-  --move         Déplacer au lieu de copier (défaut: copie)
-  --no-month     Tri par année uniquement
-  --dry-run      Simulation (aucune écriture disque)
-  --threads=N    Nombre de threads parallèles (défaut: 4)
-  --verbose      Affichage détaillé
-  --rebuild      Force la recompilation
-  --help         Affiche cette aide
+Options:
+  --move                   Move instead of copy (default: copy)
+  --no-month               Sort by year only, no month subdirectory
+  --dry-run                Simulate, no files are written
+  --threads=N              Number of parallel threads (default: 4)
+  --verbose                Detailed output
+  --exclude-pattern <pat>  Skip files whose name contains <pat> (repeatable)
+  --delete-excluded        Delete matched files from source instead of skipping
+  --install                Install mediasort globally (~/.mediasort/bin)
+  --rebuild                Force JAR recompilation
+  --help                   Show this help
 
-Exemples :
-  mediasort /photos /backup/photos --dry-run
+Examples:
+  mediasort /photos --dry-run
+  mediasort /photos /backup/photos
   mediasort C:\\Photos D:\\Backup --move
+  mediasort /photos --exclude-pattern screenshot
+  mediasort /photos --exclude-pattern screenshot --delete-excluded
   mediasort /data/photos /sorted --verbose --threads=8
 """
 ```
