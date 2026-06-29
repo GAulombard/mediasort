@@ -154,16 +154,29 @@ photo.jpg (existe) → photo_002.jpg
 Afficher un récapitulatif :
 
 ```text
-=== STATISTIQUES ===
-Fichiers traités : 847
-  ├─ Année 2023 : 412
-  ├─ Année 2024 : 298
-  ├─ Année 2025 : 89
-  └─ Inconnu    : 48
-Erreurs          : 3
-Temps écoulé     : 2.3s
-=====================
+=== STATISTICS ===
+Files processed  : 847
+  ├─ Year 2023 : 412
+  ├─ Year 2024 : 298
+  ├─ Year 2025 : 89
+  └─ Unknown   : 48
+Excluded         : 12
+Errors           : 3
+Elapsed          : 2.3s
+==================
 ```
+
+### Progress Bar
+
+Pendant le traitement, une progress bar ASCII s'affiche sur `stderr` :
+
+```
+[===================>          ] 45/100 (45%)
+```
+
+- Désactivée en `--verbose` (les logs par fichier remplissent ce rôle)
+- Mise à jour après chaque fichier (traité, exclu ou en erreur)
+- Largeur fixe de 30 caractères + compteur + pourcentage
 
 ---
 
@@ -474,6 +487,11 @@ Après implémentation complète, `mediasort` doit :
 - ✅ Fonctionner en mode `--dry-run`
 - ✅ Afficher l'aide avec `--help`
 - ✅ Tourner avec virtual threads
+- ✅ Afficher une progress bar ASCII sur stderr pendant le traitement
+- ✅ Destination optionnelle (défaut : `<source>/mediasort/`)
+- ✅ Exclure des fichiers via `--exclude-pattern` (répétable, insensible à la casse)
+- ✅ Supprimer les exclus avec `--delete-excluded`
+- ✅ Installer globalement avec `--install` (fonctionne avec CMD, PowerShell et Git Bash)
 
 ---
 
