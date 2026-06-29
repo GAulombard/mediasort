@@ -94,6 +94,24 @@ destination/
 └── unknown/    ← files with no detectable date
 ```
 
+## Before / After
+
+**Before:**
+```
+photos/
+├── IMG_20191205_183426.jpg
+├── IMG_20200614_092341.jpg
+└── VID_20210301_120000.mp4
+```
+
+**After:**
+```
+photos/mediasort/
+├── 2019/12_december/IMG_20191205_183426.jpg
+├── 2020/06_june/IMG_20200614_092341.jpg
+└── 2021/03_march/VID_20210301_120000.mp4
+```
+
 ## Date sources (priority order)
 
 1. **Google Takeout JSON** — sidecar `.json` file with the same name
@@ -103,8 +121,11 @@ destination/
 
 ## Supported formats
 
-**Images:** JPG, PNG, GIF, BMP, WebP, HEIC, HEIF, TIFF, RAW (CR2, CR3, NEF, ARW, DNG, ORF, RW2)  
-**Videos:** MP4, MOV, AVI, MKV, WMV, M4V, 3GP, MTS, M2TS
+| Type    | Extensions                                        |
+|---------|---------------------------------------------------|
+| Images  | JPEG, JPG, PNG, GIF, BMP, TIFF, WEBP, HEIC, HEIF |
+| Videos  | MP4, MOV, AVI, MKV, 3GP                          |
+| Sidecar | JSON (Google Takeout)                             |
 
 ## All options
 
@@ -122,6 +143,19 @@ destination/
 | `--install` | Install mediasort globally (`~/.mediasort/bin`) | — |
 | `--rebuild` | Force JAR recompilation | false |
 | `--help` | Show help | — |
+
+## Roadmap
+
+- [x] Google Takeout JSON sidecar support
+- [ ] Duplicate detection
+- [x] Dry-run mode
+- [x] Global install (`~/.mediasort/bin`)
+- [x] Default destination to `<source>/mediasort/` when not specified
+- [ ] GUI (maybe, one day)
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR. All PRs must target the `develop` branch.
 
 ## License
 

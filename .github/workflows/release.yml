@@ -1,5 +1,9 @@
 name: Release
 
+# This workflow runs ONLY from master (via tag push or manual dispatch).
+# Do NOT trigger this from develop or feature branches.
+# For PR validation, see ci.yml.
+
 # Triggers:
 #   1. Push a tag: git tag v1.2.3 && git push origin v1.2.3
 #   2. Manually via GitHub Actions UI (Actions → Release → Run workflow)
