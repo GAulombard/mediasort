@@ -35,10 +35,14 @@ public class DateExtractor {
     ) {}
 
     // Patterns ordered by specificity
-    private static final Pattern P_IMG      = Pattern.compile("IMG_(\\d{4})(\\d{2})(\\d{2})");
-    private static final Pattern P_VID      = Pattern.compile("VID-(\\d{4})(\\d{2})(\\d{2})");
-    private static final Pattern P_DATETIME = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})_(\\d{2})(\\d{2})(\\d{2})");
-    private static final Pattern P_SCREEN   = Pattern.compile("Screenshot_(\\d{4})-(\\d{2})-(\\d{2})");
+    private static final Pattern P_IMG        = Pattern.compile("IMG[_-](\\d{4})(\\d{2})(\\d{2})");
+    private static final Pattern P_VID        = Pattern.compile("VID[_-](\\d{4})(\\d{2})(\\d{2})");
+    private static final Pattern P_DATETIME   = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})_(\\d{2})(\\d{2})(\\d{2})");
+    private static final Pattern P_SCREEN     = Pattern.compile("Screenshot_(\\d{4})-(\\d{2})-(\\d{2})");
+    // FB_IMG_<epoch millis> (Facebook) and Snapchat-<epoch millis>
+    private static final Pattern P_EPOCH_MS   = Pattern.compile("(?:FB_IMG_|Snapchat-)(\\d{13})");
+    // Generic ISO-ish date fallback, e.g. "WhatsApp Image 2024-02-27 à 12.00.07_...jpg"
+    private static final Pattern P_DATE_DASH  = Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})");
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -111,7 +115,22 @@ public class DateExtractor {
         m = P_SCREEN.matcher(filename);
         if (m.find()) return toDate(m.group(1), m.group(2), m.group(3));
 
+        m = P_EPOCH_MS.matcher(filename);
+        if (m.find()) return fromEpochMillis(m.group(1));
+
+        m = P_DATE_DASH.matcher(filename);
+        if (m.find()) return toDate(m.group(1), m.group(2), m.group(3));
+
         return Optional.empty();
+    }
+
+    private Optional<LocalDateTime> fromEpochMillis(String millis) {
+        try {
+            long epoch = Long.parseLong(millis);
+            return Optional.of(LocalDateTime.ofInstant(Instant.ofEpochMilli(epoch), ZoneId.systemDefault()));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     private Optional<LocalDateTime> toDate(String year, String month, String day) {

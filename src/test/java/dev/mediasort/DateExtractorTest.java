@@ -30,6 +30,8 @@ class DateExtractorTest {
             "VID-20241205_video.mp4,      2024, 12, 5",
             "Screenshot_2024-06-01.png,   2024, 6,  1",
             "Screenshot_2022-11-30_ui.jpg,2022, 11, 30",
+            "IMG-20161113-WA0003.jpg,     2016, 11, 13",
+            "WhatsApp Image 2024-02-27 à 12.00.07_15cf424a.jpg, 2024, 2, 27",
     })
     void filenamePatternExtractsCorrectDate(String filename, int year, int month, int day) throws IOException {
         Path file = Files.write(tempDir.resolve(filename), new byte[0]);

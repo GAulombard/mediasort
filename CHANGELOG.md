@@ -9,6 +9,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Filename date pattern matching missed dash-separated WhatsApp names (`IMG-YYYYMMDD-WAxxxx`) and generic `YYYY-MM-DD` names (`WhatsApp Image 2024-02-27 à ...`), causing those files to be sorted into `unknown/` instead of their real date
+- `IMG_`/`VID_` filename patterns now also accept a dash separator (`IMG-`, `VID-`)
+
+### Added
+- Generic `YYYY-MM-DD` filename fallback pattern used when no more specific pattern matches
+- Filename pattern support for Facebook (`FB_IMG_<epoch-ms>`) and Snapchat (`Snapchat-<epoch-ms>`) exports
+
 ## [0.0.2] - 2026-06-29
 
 ### Added
